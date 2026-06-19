@@ -7,25 +7,25 @@ EnteroBase's HierCC (Hierarchical Clustering). HC clusters organize core-genome
 Multi-Locus Sequence Typing (cgMLST) profiles into nested, evolutionary clusters,
 where lower HC levels (e.g. HC0, HC5) group near-identical genomes (recent local
 outbreak chains) and higher levels group progressively more distantly related
-isolates — up to HC1100, which corresponds to legacy MLST ST Complexes in
+isolates, up to HC1100, which corresponds to legacy MLST ST Complexes in
 *E. coli*.
 
 ## Uses
 
 Use the script for dereplicating and downsampling data whilst preserving diversity.
-Useful for curating genomes for Machine Learning approaches — especially *E. coli*,
-as this reduces the O157 sampling bias.
+Useful for curating genomes for Machine Learning approaches — especially reducing
+the O157 sampling bias.
 
 ## What it does
 
 `subsample_HC.py` runs the following pipeline on an EnteroBase metadata TSV:
 
-1. **Stx filter** — keeps rows where Stx1 *or* Stx2 is present (`+`).
-2. **Quality filter** — keeps rows with `N50 >= --min-n50` and
+1. **Stx filter** - keeps rows where Stx1 *or* Stx2 is present (`+`).
+2. **Quality filter** - keeps rows with `N50 >= --min-n50` and
    `Contigs <= --max-contigs`.
-3. **Deduplication** — keeps one representative per `--hc-dedup` cluster
+3. **Deduplication** - keeps one representative per `--hc-dedup` cluster
    (removes clones).
-4. **Subsampling** — for each `--hc-subsample` cluster, keeps all members if the
+4. **Subsampling** - for each `--hc-subsample` cluster, keeps all members if the
    cluster has `<= --max-per-cluster` members, otherwise takes a random sample of
    `--max-per-cluster` (reproducible via `--seed`).
 5. **Cluster-frequency report** — counts and ranks clusters at both HC20 and HC50
@@ -38,12 +38,12 @@ download as tab-separated values), not a trimmed subset. Make sure the export
 includes:
 
 - **All HierCC HC columns** (HC0, HC2, HC5, HC10, HC20, HC50, HC100, HC200, HC400,
-  HC1100, HC1500, HC2000, HC2350) — the script selects HC levels by name at
+  HC1100, HC1500, HC2000, HC2350) - the script selects HC levels by name at
   runtime, so any level you might pass to `--hc-dedup` / `--hc-subsample`, plus the
   HC20 and HC50 columns used for the frequency reports, must be present.
-- **Stx columns** — `Stx1(Phylotypes)` and `Stx2(Phylotypes)`.
+- **Stx columns** - `Stx1(Phylotypes)` and `Stx2(Phylotypes)`.
 - **Serotype** (O and H antigen) columns.
-- **Assembly stats** — `N50(Assembly stats)` and
+- **Assembly stats** - `N50(Assembly stats)` and
   `Contig Number(>=200 bp)(Assembly stats)`.
 
 Column names must match EnteroBase's export headers exactly. If you concatenate
@@ -80,9 +80,9 @@ python3 subsample_HC.py metadata.tsv subsampled.tsv \
 
 Given an output path `out.tsv`, the script writes:
 
-- `out.tsv` — the filtered, subsampled dataset
-- `out_dropped.tsv` — all dropped rows, annotated with the step that dropped them
-- `out_summary.txt` — run parameters and per-step counts
+- `out.tsv` - the filtered, subsampled dataset
+- `out_dropped.tsv` - all dropped rows, annotated with the step that dropped them
+- `out_summary.txt` - run parameters and per-step counts
 - `out.log` — full run log
 - `out_HC20_freq.tsv`, `out_HC50_freq.tsv` — cluster-frequency tables
 - `out_HC20_freq.png`, `out_HC50_freq.png` — cluster size-distribution plots
