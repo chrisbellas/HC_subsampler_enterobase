@@ -20,6 +20,8 @@ the O157 sampling bias.
 
 `subsample_HC.py` runs the following pipeline on an EnteroBase metadata TSV:
 
+0. **Serotype prefilter** *(optional)* - if `--serotype` is given, keeps only rows
+   whose O antigen matches (e.g. `--serotype O157`). Skipped by default.
 1. **Stx filter** - keeps rows where Stx1 *or* Stx2 is present (`+`).
 2. **Quality filter** - keeps rows with `N50 >= --min-n50` and
    `Contigs <= --max-contigs`.
@@ -67,6 +69,8 @@ python3 subsample_HC.py input.tsv output.tsv [options]
 | `--seed` | `42` | Random seed for sampling |
 | `--stx1-col` | `Stx1(Phylotypes)` | Column name for Stx1 |
 | `--stx2-col` | `Stx2(Phylotypes)` | Column name for Stx2 |
+| `--serotype O_ANTIGEN` | *(none)* | Keep only rows with this O antigen, e.g. `O157` (prefilter, off by default) |
+| `--serotype-col` | `O Antigen(Serotype Prediction)` | Column name for serotype filtering |
 | `--version` | | Print version and exit |
 
 ### Example

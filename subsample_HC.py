@@ -71,6 +71,11 @@ def main():
                         help="HC level used for subsampling, e.g. 20, 50 (default: 50)")
     parser.add_argument("--stx1-col", default="Stx1(Phylotypes)", help="Column name for Stx1 (default: 'Stx1(Phylotypes)')")
     parser.add_argument("--stx2-col", default="Stx2(Phylotypes)", help="Column name for Stx2 (default: 'Stx2(Phylotypes)')")
+    parser.add_argument("--serotype", default=None, metavar="O_ANTIGEN",
+                        help="Keep only rows matching this O antigen, e.g. O157 "
+                             "(default: no serotype filter)")
+    parser.add_argument("--serotype-col", default="O Antigen(Serotype Prediction)",
+                        help="Column name for serotype filtering (default: 'O Antigen(Serotype Prediction)')")
     args = parser.parse_args()
 
     base = os.path.splitext(args.output)[0]
@@ -86,10 +91,12 @@ def main():
     log.info("Output: %s", args.output)
     log.info("Parameters: min-n50=%d  max-contigs=%d  hc-dedup=%d  hc-subsample=%d  max-per-cluster=%d  seed=%d",
              args.min_n50, args.max_contigs, args.hc_dedup, args.hc_subsample, args.max_per_cluster, args.seed)
+    log.info("Serotype filter: %s", args.serotype if args.serotype is not None else "(none)")
     log.info("Frequency reports (hardcoded): %s", ", ".join(f"HC{lvl}" for lvl in FREQ_LEVELS))
 
     COL_STX1   = args.stx1_col
     COL_STX2   = args.stx2_col
+    COL_SEROTYPE = args.serotype_col
     COL_N50    = "N50(Assembly stats)"
     COL_CONTIGS = "Contig Number(>=200 bp)(Assembly stats)"
     COL_HC_DEDUP     = build_hc_col(args.hc_dedup)
@@ -113,18 +120,32 @@ def main():
     dropped_frames = []
 
     # Validate required columns
-    for col in [COL_STX1, COL_STX2, COL_N50, COL_CONTIGS, COL_HC_DEDUP, COL_HC_SUBSAMPLE]:
+    required_cols = [COL_STX1, COL_STX2, COL_N50, COL_CONTIGS, COL_HC_DEDUP, COL_HC_SUBSAMPLE]
+    if args.serotype is not None:
+        required_cols.append(COL_SEROTYPE)
+    for col in required_cols:
         if col not in df.columns:
             log.error("Required column not found: '%s'", col)
             log.error("Available columns: %s", list(df.columns))
             sys.exit(1)
+
+    # Serotype prefilter (optional)
+    if args.serotype is not None:
+        mask = df[COL_SEROTYPE] == args.serotype
+        dropped_frames.append(df[~mask].assign(dropped_at="Serotype filter"))
+        df = df[mask]
+        n_serotype = len(df)
+        log.info("After serotype filter: %d  (%d dropped)  [%s == %s]",
+                 n_serotype, n_input - n_serotype, COL_SEROTYPE, args.serotype)
+    else:
+        n_serotype = n_input
 
     # Stx filter
     mask = (df[COL_STX1] == "+") | (df[COL_STX2] == "+")
     dropped_frames.append(df[~mask].assign(dropped_at="Stx filter"))
     df = df[mask]
     n_stx = len(df)
-    log.info("After Stx filter:      %d  (%d dropped)", n_stx, n_input - n_stx)
+    log.info("After Stx filter:      %d  (%d dropped)", n_stx, n_serotype - n_stx)
 
     # Assembly quality filter
     mask = (df[COL_N50] >= args.min_n50) & (df[COL_CONTIGS] <= args.max_contigs)
@@ -220,10 +241,13 @@ def main():
         f"  --seed                 {args.seed}",
         f"  --stx1-col             {COL_STX1}",
         f"  --stx2-col             {COL_STX2}",
+        f"  --serotype             {args.serotype if args.serotype is not None else '(none)'}",
+        f"  --serotype-col         {COL_SEROTYPE}",
         "",
         "Filtering steps:",
         f"  Input rows:            {n_input}",
-        f"  After Stx filter:      {n_stx}  ({n_input - n_stx} dropped)",
+        f"  After serotype filter: {n_serotype}  ({n_input - n_serotype} dropped)",
+        f"  After Stx filter:      {n_stx}  ({n_serotype - n_stx} dropped)",
         f"  After quality filter:  {n_quality}  ({n_stx - n_quality} dropped)",
         f"  After HC{args.hc_dedup} dedup:       {n_dedup}  ({n_quality - n_dedup} dropped)",
         f"  After HC{args.hc_subsample} subsample:  {n_final}  ({n_dedup - n_final} dropped)",
