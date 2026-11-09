@@ -33,6 +33,13 @@ the O157 sampling bias.
 5. **Cluster-frequency report** — counts and ranks clusters at both HC20 and HC50
    in the final output, writing frequency tables and size-distribution plots.
 
+With `--within-source`, steps 3–4 run separately within each source type (the
+`Source Type` column, e.g. Human, Bovine) and the results are combined into one
+output. A clone found in two hosts therefore keeps one representative per host.
+Note that `--max-per-cluster` then applies per source, so an HC cluster spanning
+several hosts can contribute up to `--max-per-cluster` strains from each.
+Rows with a blank source type are grouped as `Unknown`.
+
 ## Input
 
 The input must be the **full metadata TSV exported from EnteroBase** (Data →
@@ -47,6 +54,7 @@ includes:
 - **Serotype** (O and H antigen) columns.
 - **Assembly stats** - `N50(Assembly stats)` and
   `Contig Number(>=200 bp)(Assembly stats)`.
+- **Source Type** - only needed with `--within-source`.
 
 Column names must match EnteroBase's export headers exactly. If you concatenate
 multiple exports, see the note at the end of this file.
@@ -71,6 +79,8 @@ python3 subsample_HC.py input.tsv output.tsv [options]
 | `--stx2-col` | `Stx2(Phylotypes)` | Column name for Stx2 |
 | `--serotype O_ANTIGEN` | *(none)* | Keep only rows with this O antigen, e.g. `O157` (prefilter, off by default) |
 | `--serotype-col` | `O Antigen(Serotype Prediction)` | Column name for serotype filtering |
+| `--within-source` | *(off)* | Deduplicate and subsample separately within each source type, then combine into one output |
+| `--source-col` | `Source Type` | Column name for source type (used with `--within-source`) |
 | `--version` | | Print version and exit |
 
 ### Example
@@ -78,6 +88,9 @@ python3 subsample_HC.py input.tsv output.tsv [options]
 ```bash
 python3 subsample_HC.py metadata.tsv subsampled.tsv \
     --hc-dedup 5 --hc-subsample 50 --max-per-cluster 10
+
+# Deduplicate/subsample within each host (source type), combined output
+python3 subsample_HC.py metadata.tsv subsampled.tsv --within-source
 ```
 
 ## Outputs
@@ -90,6 +103,10 @@ Given an output path `out.tsv`, the script writes:
 - `out.log` — full run log
 - `out_HC20_freq.tsv`, `out_HC50_freq.tsv` — cluster-frequency tables
 - `out_HC20_freq.png`, `out_HC50_freq.png` — cluster size-distribution plots
+
+With `--within-source` the same files are produced; the summary additionally
+lists counts per source, and `dropped_at` in `out_dropped.tsv` names the source
+(e.g. `[Human] HC0 deduplication`).
 
 ## Requirements
 
