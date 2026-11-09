@@ -25,8 +25,8 @@ the O157 sampling bias.
 1. **Stx filter** - keeps rows where Stx1 *or* Stx2 is present (`+`).
 2. **Quality filter** - keeps rows with `N50 >= --min-n50` and
    `Contigs <= --max-contigs`.
-3. **Deduplication** - keeps one representative per `--hc-dedup` cluster
-   (removes clones).
+3. **Deduplication** - keeps one randomly chosen representative per `--hc-dedup`
+   cluster (removes clones; reproducible via `--seed`).
 4. **Subsampling** - for each `--hc-subsample` cluster, keeps all members if the
    cluster has `<= --max-per-cluster` members, otherwise takes a random sample of
    `--max-per-cluster` (reproducible via `--seed`).
@@ -66,7 +66,7 @@ python3 subsample_HC.py input.tsv output.tsv [options]
 | `--hc-dedup LEVEL` | `0` | HC level used for deduplication |
 | `--hc-subsample LEVEL` | `50` | HC level used for subsampling |
 | `--max-per-cluster` | `10` | Maximum representatives per subsampling cluster |
-| `--seed` | `42` | Random seed for sampling |
+| `--seed` | `42` | Random seed for deduplication and subsampling |
 | `--stx1-col` | `Stx1(Phylotypes)` | Column name for Stx1 |
 | `--stx2-col` | `Stx2(Phylotypes)` | Column name for Stx2 |
 | `--serotype O_ANTIGEN` | *(none)* | Keep only rows with this O antigen, e.g. `O157` (prefilter, off by default) |

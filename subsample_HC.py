@@ -8,7 +8,7 @@ Filters:
   - Contigs <= 500
 
 Deduplication:
-  - One representative per HC{dedup} cluster (removes clones; level configurable)
+  - One randomly chosen representative per HC{dedup} cluster (removes clones; level configurable)
 
 Subsampling:
   - HC{subsample} clusters with <= max-per-cluster members: keep all
@@ -66,7 +66,7 @@ def main():
     parser.add_argument("--hc-dedup", type=int, default=0, metavar="LEVEL",
                         help="HC level used for deduplication, e.g. 0, 5, 10 (default: 0)")
     parser.add_argument("--max-per-cluster", type=int, default=10, help="Maximum representatives per subsampling cluster (default: 10)")
-    parser.add_argument("--seed", type=int, default=42, help="Random seed for sampling (default: 42)")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for dedup and subsampling (default: 42)")
     parser.add_argument("--hc-subsample", type=int, default=50, metavar="LEVEL",
                         help="HC level used for subsampling, e.g. 20, 50 (default: 50)")
     parser.add_argument("--stx1-col", default="Stx1(Phylotypes)", help="Column name for Stx1 (default: 'Stx1(Phylotypes)')")
@@ -155,7 +155,9 @@ def main():
     log.info("After quality filter:  %d  (%d dropped)", n_quality, n_stx - n_quality)
 
     # HC deduplication
-    df_dedup = df.drop_duplicates(subset=COL_HC_DEDUP)
+    # Shuffle first so the representative kept per cluster is random (reproducible via --seed),
+    # then restore original row order
+    df_dedup = df.sample(frac=1, random_state=args.seed).drop_duplicates(subset=COL_HC_DEDUP).sort_index()
     dropped_frames.append(
         df[~df.index.isin(df_dedup.index)].assign(dropped_at=f"HC{args.hc_dedup} deduplication")
     )
